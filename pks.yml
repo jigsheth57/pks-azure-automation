@@ -52,6 +52,17 @@ product-properties:
   .properties.plan1_selector:
     selected_option: active
     value: Plan Active
+  .properties.plan1_selector.active.addons_spec:
+    value: "---\r\napiVersion: storage.k8s.io/v1\r\nkind: StorageClass\r\nmetadata:\r\n
+      \ name: fast\r\nprovisioner: kubernetes.io/azure-disk\r\nparameters:\r\n  storageaccounttype:
+      Premium_LRS\r\n  kind: managed\r\n---\r\napiVersion: storage.k8s.io/v1\r\nkind:
+      StorageClass\r\nmetadata:\r\n  name: slow\r\nprovisioner: kubernetes.io/azure-disk\r\nparameters:\r\n
+      \ storageaccounttype: Standard_LRS\r\n  kind: managed\r\n---\r\napiVersion:
+      v1\r\nkind: ServiceAccount\r\nmetadata:\r\n  name: tiller\r\n  namespace: kube-system\r\n---\r\napiVersion:
+      rbac.authorization.k8s.io/v1\r\nkind: ClusterRoleBinding\r\nmetadata:\r\n  name:
+      tiller\r\nroleRef:\r\n  apiGroup: rbac.authorization.k8s.io\r\n  kind: ClusterRole\r\n
+      \ name: cluster-admin\r\nsubjects:\r\n  - kind: ServiceAccount\r\n    name:
+      tiller\r\n    namespace: kube-system\r\n"
   .properties.plan1_selector.active.allow_privileged_containers:
     value: true
   .properties.plan1_selector.active.description:
@@ -107,11 +118,43 @@ product-properties:
   .properties.telemetry_selector:
     selected_option: disabled
     value: disabled
+
   .properties.uaa:
-    selected_option: internal
-    value: internal
+    selected_option: ldap
+    value: ldap
+  .properties.uaa.ldap.credentials:
+    value:
+      identity: ((uaa-ldap-credentials-identity))
+      password: ((uaa-ldap-credentials-password))
+  .properties.uaa.ldap.external_groups_whitelist:
+    value: '*'
+  .properties.uaa.ldap.first_name_attribute:
+    value: givenName
+  .properties.uaa.ldap.group_search_base:
+    value: ((uaa-ldap-search-base))
+  .properties.uaa.ldap.group_search_filter:
+    value: (&(objectClass=groupOfNames)(member={0}))
+  .properties.uaa.ldap.last_name_attribute:
+    value: sn
+  .properties.uaa.ldap.ldap_referrals:
+    value: follow
+  .properties.uaa.ldap.mail_attribute_name:
+    value: mail
+  .properties.uaa.ldap.search_base:
+    value: ((uaa-ldap-search-base))
+  .properties.uaa.ldap.search_filter:
+    value: (&(objectClass=inetOrgPerson)(uid={0}))
+  .properties.uaa.ldap.url:
+    value: ldaps://ldap.jumpcloud.com:636
   .properties.uaa_oidc:
-    value: false
+    value: true
+
+  # .properties.uaa:
+  #   selected_option: internal
+  #   value: internal
+  # .properties.uaa_oidc:
+  #   value: false
+
   .properties.uaa_pks_cli_access_token_lifetime:
     value: 600
   .properties.uaa_pks_cli_refresh_token_lifetime:
@@ -140,9 +183,9 @@ resource-config:
       size_mb: automatic
     instance_type:
       id: automatic
-    internet_connected: false
-    elb_names:
-    - pksdemo-pks-lb
+    internet_connected: true
+    # elb_names:
+    # - pksdemo-pks-lb
     max_in_flight: 1
 errand-config:
   delete-all-clusters:
