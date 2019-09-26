@@ -30,7 +30,7 @@ networks-configuration:
       cidr: 10.0.8.0/26
       dns: 168.63.129.16
       gateway: 10.0.8.1
-      reserved_ip_ranges: 10.0.8.0-10.0.8.5
+      reserved_ip_ranges: 10.0.8.0-10.0.8.9
       availability_zone_names:
       - "null"
   - name: pks

@@ -33,4 +33,4 @@ opsman-configuration:
     # needs to be assigned to the VM.
     # It is also permissable to assign both.
     public_ip: ((ops-manager-public-ip))
-    private_ip: 10.0.8.4
+    private_ip: 10.0.8.5
