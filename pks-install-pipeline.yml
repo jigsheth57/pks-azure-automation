@@ -106,7 +106,7 @@ jobs:
         config: interpolated-config
         env: interpolated-config
       params:
-        CONFIG_FILE: pivotal-container-service.yml
+        CONFIG_FILE: pks.yml
     - task: apply-product-changes
       image: platform-automation-image
       file: platform-automation-tasks/tasks/apply-changes.yml
