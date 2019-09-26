@@ -1,4 +1,48 @@
 ---
+credhub-interpolate: &credhub-interpolate
+  image: platform-automation-image
+  file: platform-automation-tasks/tasks/credhub-interpolate.yml
+  params:
+    CREDHUB_CLIENT: ((credhub-client))
+    CREDHUB_SECRET: ((credhub-secret))
+    CREDHUB_CA_CERT: ((credhub-ca.ca))
+    CREDHUB_SERVER: https://ci.sys.aws.pcfapps.org:8844/
+    PREFIX: /concourse/main/azurepksdemo
+  input_mapping:
+    files: config
+  output_mapping:
+    interpolated-files: interpolated-config
+persist-state: &persist-state
+  do:
+    - task: make-commit
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/make-git-commit.yml
+      input_mapping:
+        repository: config
+        file-source: generated-state
+      output_mapping:
+        repository-commit: config-commit
+      params:
+        FILE_SOURCE_PATH: state.yml
+        FILE_DESTINATION_PATH: state.yml
+        GIT_AUTHOR_EMAIL: "pcf-pipeline-bot@example.com"
+        GIT_AUTHOR_NAME: "Platform Automation Bot"
+        COMMIT_MESSAGE: 'Update state file'
+    - put: config
+      params:
+        repository: config-commit
+        merge: true
+platform-automation-image: &platform-automation-image
+  resource: platform-automation
+  params:
+    globs: ["*image*.tgz"]
+    unpack: true
+platform-automation-tasks: &platform-automation-tasks
+  resource: platform-automation
+  params:
+    globs: ["*tasks*.zip"]
+    unpack: true
+
 resource_types:
 - name: pivnet
   type: docker-image
@@ -29,35 +73,26 @@ groups:
   jobs:
   - upload-and-stage-pks
   - configure-n-deploy-pks
+- name: "Full View"
+  jobs:
+  - install-n-configure-ops-manager
+  - delete-installation
+  - configure-n-deploy-director
+  - upload-and-stage-pks
+  - configure-n-deploy-pks
 jobs:
 - name: install-n-configure-ops-manager
-  public: true
+  public: false
   serial: true
   plan:
-    - get: platform-automation-image
-      resource: platform-automation
-      params:
-        globs: ["*image*.tgz"]
-        unpack: true
-    - get: platform-automation-tasks
-      resource: platform-automation
-      params:
-        globs: ["*tasks*.zip"]
-        unpack: true
-    - get: config
+    - in_parallel:
+      - get: platform-automation-image
+        <<: *platform-automation-image
+      - get: platform-automation-tasks
+        <<: *platform-automation-tasks
+      - get: config
     - task: credhub-interpolate
-      image: platform-automation-image
-      file: platform-automation-tasks/tasks/credhub-interpolate.yml
-      params:
-        CREDHUB_CLIENT: ((credhub-client))
-        CREDHUB_SECRET: ((credhub-secret))
-        CREDHUB_CA_CERT: ((credhub-ca.ca))
-        CREDHUB_SERVER: https://ci.sys.aws.pcfapps.org:8844/
-        PREFIX: /concourse/main/azurepksdemo
-      input_mapping:
-        files: config
-      output_mapping:
-        interpolated-files: interpolated-config
+      <<: *credhub-interpolate
     - task: download-product
       image: platform-automation-image
       file: platform-automation-tasks/tasks/download-product.yml
@@ -73,25 +108,7 @@ jobs:
         state: config
         image: downloaded-product
       ensure:
-        do:
-          - task: make-commit
-            image: platform-automation-image
-            file: platform-automation-tasks/tasks/make-git-commit.yml
-            input_mapping:
-              repository: config
-              file-source: generated-state
-            output_mapping:
-              repository-commit: config-commit
-            params:
-              FILE_SOURCE_PATH: state.yml
-              FILE_DESTINATION_PATH: state.yml
-              GIT_AUTHOR_EMAIL: "pcf-pipeline-bot@example.com"
-              GIT_AUTHOR_NAME: "Platform Automation Bot"
-              COMMIT_MESSAGE: 'Update state file'
-          - put: config
-            params:
-              repository: config-commit
-              merge: true
+        <<: *persist-state
     - task: configure-authentication
       image: platform-automation-image
       file: platform-automation-tasks/tasks/configure-authentication.yml
@@ -101,35 +118,19 @@ jobs:
         config: interpolated-config
 
 - name: configure-n-deploy-director
-  public: true
+  public: false
   serial: true
   plan:
-    - get: platform-automation-image
-      resource: platform-automation
-      params:
-        globs: ["*image*.tgz"]
-        unpack: true
-    - get: platform-automation-tasks
-      resource: platform-automation
-      params:
-        globs: ["*tasks*.zip"]
-        unpack: true
-    - get: config
-      passed: [install-n-configure-ops-manager]
-      trigger: true
+    - in_parallel:
+      - get: platform-automation-image
+        <<: *platform-automation-image
+        passed: [install-n-configure-ops-manager]
+      - get: platform-automation-tasks
+        <<: *platform-automation-tasks
+        passed: [install-n-configure-ops-manager]
+      - get: config
     - task: credhub-interpolate
-      image: platform-automation-image
-      file: platform-automation-tasks/tasks/credhub-interpolate.yml
-      params:
-        CREDHUB_CLIENT: ((credhub-client))
-        CREDHUB_SECRET: ((credhub-secret))
-        CREDHUB_CA_CERT: ((credhub-ca.ca))
-        CREDHUB_SERVER: https://ci.sys.aws.pcfapps.org:8844/
-        PREFIX: /concourse/main/azurepksdemo
-      input_mapping:
-        files: config
-      output_mapping:
-        interpolated-files: interpolated-config
+      <<: *credhub-interpolate
     - task: configure-director
       image: platform-automation-image
       file: platform-automation-tasks/tasks/configure-director.yml
@@ -143,33 +144,17 @@ jobs:
         env: interpolated-config
 
 - name: delete-installation
-  public: true
+  public: false
   serial: true
   plan:
-    - get: platform-automation-image
-      resource: platform-automation
-      params:
-        globs: ["*image*.tgz"]
-        unpack: true
-    - get: platform-automation-tasks
-      resource: platform-automation
-      params:
-        globs: ["*tasks*.zip"]
-        unpack: true
-    - get: config
+    - in_parallel:
+      - get: platform-automation-image
+        <<: *platform-automation-image
+      - get: platform-automation-tasks
+        <<: *platform-automation-tasks
+      - get: config
     - task: credhub-interpolate
-      image: platform-automation-image
-      file: platform-automation-tasks/tasks/credhub-interpolate.yml
-      params:
-        CREDHUB_CLIENT: ((credhub-client))
-        CREDHUB_SECRET: ((credhub-secret))
-        CREDHUB_CA_CERT: ((credhub-ca.ca))
-        CREDHUB_SERVER: https://ci.sys.aws.pcfapps.org:8844/
-        PREFIX: /concourse/main/azurepksdemo
-      input_mapping:
-        files: config
-      output_mapping:
-        interpolated-files: interpolated-config
+      <<: *credhub-interpolate
     - task: delete-installation
       image: platform-automation-image
       file: platform-automation-tasks/tasks/delete-installation.yml
@@ -182,53 +167,21 @@ jobs:
         config: interpolated-config
         state: config
       ensure:
-        do:
-          - task: make-commit
-            image: platform-automation-image
-            file: platform-automation-tasks/tasks/make-git-commit.yml
-            input_mapping:
-              repository: config
-              file-source: generated-state
-            output_mapping:
-              repository-commit: config-commit
-            params:
-              FILE_SOURCE_PATH: state.yml
-              FILE_DESTINATION_PATH: state.yml
-              GIT_AUTHOR_EMAIL: "pcf-pipeline-bot@example.com"
-              GIT_AUTHOR_NAME: "Platform Automation Bot"
-              COMMIT_MESSAGE: 'Update state file'
-          - put: config
-            params:
-              repository: config-commit
-              merge: true
+        <<: *persist-state
 - name: upload-and-stage-pks
-  public: true
+  public: false
   serial: true
   plan:
-    - get: platform-automation-image
-      resource: platform-automation
-      params:
-        globs: ["*image*.tgz"]
-        unpack: true
-    - get: platform-automation-tasks
-      resource: platform-automation
-      params:
-        globs: ["*tasks*.zip"]
-        unpack: true
-    - get: config
+    - in_parallel:
+      - get: platform-automation-image
+        <<: *platform-automation-image
+        passed: [configure-n-deploy-director]
+      - get: platform-automation-tasks
+        <<: *platform-automation-tasks
+        passed: [configure-n-deploy-director]
+      - get: config
     - task: credhub-interpolate
-      image: platform-automation-image
-      file: platform-automation-tasks/tasks/credhub-interpolate.yml
-      params:
-        CREDHUB_CLIENT: ((credhub-client))
-        CREDHUB_SECRET: ((credhub-secret))
-        CREDHUB_CA_CERT: ((credhub-ca.ca))
-        CREDHUB_SERVER: https://ci.sys.aws.pcfapps.org:8844/
-        PREFIX: /concourse/main/azurepksdemo
-      input_mapping:
-        files: config
-      output_mapping:
-        interpolated-files: interpolated-config
+      <<: *credhub-interpolate
     - task: download-product
       image: platform-automation-image
       file: platform-automation-tasks/tasks/download-product.yml
@@ -252,35 +205,19 @@ jobs:
         env: interpolated-config
         stemcell: pks-stemcell
 - name: configure-n-deploy-pks
-  public: true
+  public: false
   serial: true
   plan:
-    - get: platform-automation-image
-      resource: platform-automation
-      params:
-        globs: ["*image*.tgz"]
-        unpack: true
-    - get: platform-automation-tasks
-      resource: platform-automation
-      params:
-        globs: ["*tasks*.zip"]
-        unpack: true
-    - get: config
-      passed: [upload-and-stage-pks]
-      trigger: true
+    - in_parallel:
+      - get: platform-automation-image
+        <<: *platform-automation-image
+        passed: [upload-and-stage-pks]
+      - get: platform-automation-tasks
+        <<: *platform-automation-tasks
+        passed: [upload-and-stage-pks]
+      - get: config
     - task: credhub-interpolate
-      image: platform-automation-image
-      file: platform-automation-tasks/tasks/credhub-interpolate.yml
-      params:
-        CREDHUB_CLIENT: ((credhub-client))
-        CREDHUB_SECRET: ((credhub-secret))
-        CREDHUB_CA_CERT: ((credhub-ca.ca))
-        CREDHUB_SERVER: https://ci.sys.aws.pcfapps.org:8844/
-        PREFIX: /concourse/main/azurepksdemo
-      input_mapping:
-        files: config
-      output_mapping:
-        interpolated-files: interpolated-config
+      <<: *credhub-interpolate
     - task: configure-pks
       image: platform-automation-image
       file: platform-automation-tasks/tasks/configure-product.yml
