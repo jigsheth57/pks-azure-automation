@@ -1,0 +1,101 @@
+iaas-configurations:
+- additional_cloud_properties: {}
+  bosh_storage_account_name: ((azure-bosh-storage-account-name))
+  client_id: ((azure-client-id))
+  client_secret: ((azure-client-secret))
+  cloud_storage_type: managed_disks
+  default_security_group: pksdemo-bosh-deployed-vms-security-group
+  deployed_cloud_storage_type: managed_disks
+  environment: AzureCloud
+  name: default
+  resource_group_name: pksdemo
+  ssh_private_key: ((azure-ssh-public-key.private_key))
+  ssh_public_key: ((azure-ssh-public-key.public_key))
+  storage_account_type: Premium_LRS
+  subscription_id: ((azure-subscription-id))
+  tenant_id: ((azure-tenant-id))
+network-assignment:
+  network:
+    name: infrastructure
+  other_availability_zones:
+  - name: "null"
+  singleton_availability_zone:
+    name: "null"
+networks-configuration:
+  icmp_checks_enabled: false
+  networks:
+  - name: infrastructure
+    subnets:
+    - iaas_identifier: pksdemo-virtual-network/pksdemo-infrastructure-subnet
+      cidr: 10.0.8.0/26
+      dns: 168.63.129.16
+      gateway: 10.0.8.1
+      reserved_ip_ranges: 10.0.8.0-10.0.8.5
+      availability_zone_names:
+      - "null"
+  - name: pks
+    subnets:
+    - iaas_identifier: pksdemo-virtual-network/pksdemo-pks-subnet
+      cidr: 10.0.12.0/22
+      dns: 168.63.129.16
+      gateway: 10.0.12.1
+      reserved_ip_ranges: 10.0.12.0-10.0.12.5
+      availability_zone_names:
+      - "null"
+  - name: services
+    subnets:
+    - iaas_identifier: pksdemo-virtual-network/pksdemo-pks-services-subnet
+      cidr: 10.0.16.0/22
+      dns: 168.63.129.16
+      gateway: 10.0.16.1
+      reserved_ip_ranges: 10.0.16.0-10.0.16.5
+      availability_zone_names:
+      - "null"
+properties-configuration:
+  director_configuration:
+    allow_legacy_agents: false
+    blobstore_type: local
+    bosh_recreate_on_next_deploy: false
+    bosh_recreate_persistent_disks_on_next_deploy: false
+    database_type: internal
+    director_worker_count: 5
+    encryption:
+      keys: []
+      providers: []
+    hm_emailer_options:
+      enabled: false
+    hm_pager_duty_options:
+      enabled: false
+    identification_tags: {}
+    keep_unreachable_vms: false
+    local_blobstore_options:
+      tls_enabled: true
+    ntp_servers_string: 0.pool.ntp.org, 1.pool.ntp.org, 2.pool.ntp.org, 3.pool.ntp.org
+    post_deploy_enabled: true
+    resurrector_enabled: true
+    retry_bosh_deploys: false
+    skip_director_drain: true
+  dns_configuration:
+    excluded_recursors: []
+    handlers: []
+  security_configuration:
+    generate_vm_passwords: true
+    opsmanager_root_ca_trusted_certs: true
+    trusted_certificates: ((trusted-ca.ca))
+  syslog_configuration:
+    enabled: false
+resource-configuration:
+  compilation:
+    instances: automatic
+    instance_type:
+      id: automatic
+    internet_connected: false
+  director:
+    instances: automatic
+    persistent_disk:
+      size_mb: automatic
+    instance_type:
+      id: automatic
+    internet_connected: false
+vmextensions-configuration: []
+vmtypes-configuration: {}
