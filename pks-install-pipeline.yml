@@ -1,0 +1,70 @@
+---
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+resources:
+- name: platform-automation
+  type: pivnet
+  source:
+    product_slug: platform-automation
+    api_token: ((pivnet-refresh-token))
+- name: config
+  type: git
+  source:
+    uri: ((pipeline-repo))
+    private_key: ((pks-azure-automation-git-deploy-key.private_key))
+    branch: master
+jobs:
+- name: upload-and-stage-pks
+  public: true
+  serial: true
+  plan:
+    - get: platform-automation-image
+      resource: platform-automation
+      params:
+        globs: ["*image*.tgz"]
+        unpack: true
+    - get: platform-automation-tasks
+      resource: platform-automation
+      params:
+        globs: ["*tasks*.zip"]
+        unpack: true
+    - get: config
+    - task: credhub-interpolate
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/credhub-interpolate.yml
+      params:
+        CREDHUB_CLIENT: ((credhub-client))
+        CREDHUB_SECRET: ((credhub-secret))
+        CREDHUB_CA_CERT: ((credhub-ca.ca))
+        CREDHUB_SERVER: https://ci.sys.aws.pcfapps.org:8844/
+        PREFIX: /concourse/main/azurepksdemo
+      input_mapping:
+        files: config
+      output_mapping:
+        interpolated-files: interpolated-config
+    - task: download-product
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/download-product.yml
+      params:
+        CONFIG_FILE: download-pks.yml
+      input_mapping:
+        config: interpolated-config
+      output_mapping:
+        downloaded-product: pks-product
+        downloaded-stemcell: pks-stemcell
+    - task: upload-and-stage-product
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/upload-and-stage-product.yml
+      input_mapping:
+        product: pks-product
+        env: interpolated-config
+    - task: upload-pks-stemcell
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/upload-stemcell.yml
+      input_mapping:
+        env: interpolated-config
+        stemcell: pks-stemcell
