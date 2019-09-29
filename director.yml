@@ -4,11 +4,11 @@ iaas-configurations:
   client_id: ((azure-client-id))
   client_secret: ((azure-client-secret))
   cloud_storage_type: managed_disks
-  default_security_group: pksdemo-bosh-deployed-vms-security-group
+  default_security_group: ((pcf-resource-group-name))-bosh-deployed-vms-security-group
   deployed_cloud_storage_type: managed_disks
   environment: AzureCloud
   name: default
-  resource_group_name: pksdemo
+  resource_group_name: ((pcf-resource-group-name))
   ssh_private_key: ((azure-ssh-public-key.private_key))
   ssh_public_key: ((azure-ssh-public-key.public_key))
   storage_account_type: Premium_LRS
@@ -26,7 +26,7 @@ networks-configuration:
   networks:
   - name: infrastructure
     subnets:
-    - iaas_identifier: pksdemo-virtual-network/pksdemo-infrastructure-subnet
+    - iaas_identifier: ((pcf-resource-group-name))-virtual-network/((pcf-resource-group-name))-infrastructure-subnet
       cidr: 10.0.8.0/26
       dns: 168.63.129.16
       gateway: 10.0.8.1
@@ -35,7 +35,7 @@ networks-configuration:
       - "null"
   - name: pks
     subnets:
-    - iaas_identifier: pksdemo-virtual-network/pksdemo-pks-subnet
+    - iaas_identifier: ((pcf-resource-group-name))-virtual-network/((pcf-resource-group-name))-pks-subnet
       cidr: 10.0.12.0/22
       dns: 168.63.129.16
       gateway: 10.0.12.1
@@ -44,7 +44,7 @@ networks-configuration:
       - "null"
   - name: services
     subnets:
-    - iaas_identifier: pksdemo-virtual-network/pksdemo-pks-services-subnet
+    - iaas_identifier: ((pcf-resource-group-name))-virtual-network/((pcf-resource-group-name))-pks-services-subnet
       cidr: 10.0.16.0/22
       dns: 168.63.129.16
       gateway: 10.0.16.1

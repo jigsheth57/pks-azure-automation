@@ -15,21 +15,21 @@ product-properties:
   .properties.cloud_provider.azure.azure_worker_managed_identity:
     value: pks-worker
   .properties.cloud_provider.azure.default_security_group:
-    value: pksdemo-bosh-deployed-vms-security-group
+    value: ((pcf-resource-group-name))-bosh-deployed-vms-security-group
   .properties.cloud_provider.azure.location:
-    value: NorthCentralUS
+    value: ((location))
   .properties.cloud_provider.azure.primary_availability_set:
-    value: pksdemo-availability-set
+    value: ((pcf-resource-group-name))-availability-set
   .properties.cloud_provider.azure.resource_group_name:
-    value: pksdemo
+    value: ((pcf-resource-group-name))
   .properties.cloud_provider.azure.subscription_id:
     value: ((azure-subscription-id))
   .properties.cloud_provider.azure.tenant_id:
     value: ((azure-tenant-id))
   .properties.cloud_provider.azure.vnet_name:
-    value: pksdemo-virtual-network
+    value: ((pcf-resource-group-name))-virtual-network
   .properties.cloud_provider.azure.vnet_resource_group_name:
-    value: pksdemo
+    value: ((pcf-resource-group-name))
   .properties.log_sink_resources_deploy:
     value: true
   .properties.metric_sink_resources_deploy:
@@ -48,7 +48,7 @@ product-properties:
     selected_option: disabled
     value: disabled
   .properties.pks_api_hostname:
-    value: api.pksdemo.azure.pcfapps.org
+    value: ((pks-api-hostname))
   .properties.plan1_selector:
     selected_option: active
     value: Plan Active
@@ -119,41 +119,41 @@ product-properties:
     selected_option: disabled
     value: disabled
 
-  .properties.uaa:
-    selected_option: ldap
-    value: ldap
-  .properties.uaa.ldap.credentials:
-    value:
-      identity: ((uaa-ldap-credentials-identity))
-      password: ((uaa-ldap-credentials-password))
-  .properties.uaa.ldap.external_groups_whitelist:
-    value: '*'
-  .properties.uaa.ldap.first_name_attribute:
-    value: givenName
-  .properties.uaa.ldap.group_search_base:
-    value: ((uaa-ldap-search-base))
-  .properties.uaa.ldap.group_search_filter:
-    value: (&(objectClass=groupOfNames)(member={0}))
-  .properties.uaa.ldap.last_name_attribute:
-    value: sn
-  .properties.uaa.ldap.ldap_referrals:
-    value: follow
-  .properties.uaa.ldap.mail_attribute_name:
-    value: mail
-  .properties.uaa.ldap.search_base:
-    value: ((uaa-ldap-search-base))
-  .properties.uaa.ldap.search_filter:
-    value: (&(objectClass=inetOrgPerson)(uid={0}))
-  .properties.uaa.ldap.url:
-    value: ldaps://ldap.jumpcloud.com:636
-  .properties.uaa_oidc:
-    value: true
-
   # .properties.uaa:
-  #   selected_option: internal
-  #   value: internal
+  #   selected_option: ldap
+  #   value: ldap
+  # .properties.uaa.ldap.credentials:
+  #   value:
+  #     identity: ((uaa-ldap-credentials-identity))
+  #     password: ((uaa-ldap-credentials-password))
+  # .properties.uaa.ldap.external_groups_whitelist:
+  #   value: '*'
+  # .properties.uaa.ldap.first_name_attribute:
+  #   value: givenName
+  # .properties.uaa.ldap.group_search_base:
+  #   value: ((uaa-ldap-search-base))
+  # .properties.uaa.ldap.group_search_filter:
+  #   value: (&(objectClass=groupOfNames)(member={0}))
+  # .properties.uaa.ldap.last_name_attribute:
+  #   value: sn
+  # .properties.uaa.ldap.ldap_referrals:
+  #   value: follow
+  # .properties.uaa.ldap.mail_attribute_name:
+  #   value: mail
+  # .properties.uaa.ldap.search_base:
+  #   value: ((uaa-ldap-search-base))
+  # .properties.uaa.ldap.search_filter:
+  #   value: (&(objectClass=inetOrgPerson)(uid={0}))
+  # .properties.uaa.ldap.url:
+  #   value: ldaps://ldap.jumpcloud.com:636
   # .properties.uaa_oidc:
-  #   value: false
+  #   value: true
+
+  .properties.uaa:
+    selected_option: internal
+    value: internal
+  .properties.uaa_oidc:
+    value: false
 
   .properties.uaa_pks_cli_access_token_lifetime:
     value: 600
@@ -185,7 +185,7 @@ resource-config:
       id: automatic
     internet_connected: true
     # elb_names:
-    # - pksdemo-pks-lb
+    # - ((pks-lb-name))
     max_in_flight: 1
 errand-config:
   delete-all-clusters:
